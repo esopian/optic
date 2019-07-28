@@ -149,7 +149,7 @@ class Editor extends React.Component {
 
     render() {
 
-        const {classes, mode, scrollContainerRef, leftMargin, children} = this.props;
+        const {classes, mode, scrollContainerRef, leftMargin, rightMargin, children} = this.props;
 
         return (
             <div className={classes.pageContainer}>
@@ -161,7 +161,9 @@ class Editor extends React.Component {
                         {leftMargin ? <TOC children={leftMargin}/> : null}
                     </Margin>
                     {children}
-                    <Margin/>
+                    <Margin>
+                        {rightMargin}
+                    </Margin>
                 </div>
                 <SuperMenu open={this.state.superMenuOpen} toggle={this.toggleSuperMenu}/>
                 <ShareDialog close={this.hideShare} open={this.state.shareOpen}/>

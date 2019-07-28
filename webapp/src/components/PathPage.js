@@ -28,6 +28,7 @@ import {RequestCommandHelper} from './requests/RequestCommandHelper';
 import RequestPageHeader from './requests/RequestPageHeader';
 import Helmet from 'react-helmet';
 import CreateNew from './navigation/CreateNew';
+import DiffCard, {MockedDiffCards} from './DiffCard';
 
 const styles = theme => ({
     root: {
@@ -422,8 +423,12 @@ class PathPage extends React.Component {
 
         const pageName = `${resourceName || absolutePath} ${apiName}`
 
+
         return (
-            <Editor baseUrl={this.props.baseUrl} leftMargin={MethodsTOC} scrollContainerRef={this.scrollContainer}>
+            <Editor baseUrl={this.props.baseUrl}
+                    leftMargin={MethodsTOC}
+                    rightMargin={<MockedDiffCards path={path.pathId} />}
+                    scrollContainerRef={this.scrollContainer}>
                 <Helmet><title>{pageName}</title></Helmet>
                 <div className={classes.root}>
                     <Sheet style={{paddingTop: 2}}>
