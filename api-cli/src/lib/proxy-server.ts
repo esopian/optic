@@ -23,6 +23,15 @@ class ProxyServer extends EventEmitter {
         const server = express();
         addBodyParsers(server);
         const proxyMiddleware = expressHttpProxy(options.target, {
+            proxyReqOptDecorator: function (proxyReqOpts, srcReq) {
+                if (proxyReqOpts && proxyReqOpts.headers && proxyReqOpts.headers['origin']) {
+                    const originalOrigin: string = (proxyReqOpts.headers['origin'] || '').toString()
+                    if (originalOrigin.startsWith(`http://localhost:${options.proxyPort}`)) {
+                        proxyReqOpts.headers['origin'] = options.target;
+                    }
+                }
+                return proxyReqOpts;
+            },
             userResDecorator: (proxyRes: any, proxyResData: Buffer, userReq: Request) => {
                 let responseBody = proxyResData.toString('utf8');
                 try {
