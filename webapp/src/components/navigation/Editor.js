@@ -149,12 +149,12 @@ class Editor extends React.Component {
 
     render() {
 
-        const {classes, mode, scrollContainerRef, leftMargin, children} = this.props;
+        const {classes, mode, scrollContainerRef, leftMargin, children, topBar} = this.props;
 
         return (
             <div className={classes.pageContainer}>
                 <div className={(mode === EditorModes.DOCUMENTATION) ? classes.navWrapper : classes.navExpandedWrapper}>
-                    <TopBar toggleSuperMenu={this.toggleSuperMenu} showShare={this.showShare}/>
+                    {(topBar ? topBar : <TopBar toggleSuperMenu={this.toggleSuperMenu} showShare={this.showShare}/>)}
                 </div>
                 <div className={classes.contentWrapper} ref={scrollContainerRef}>
                     <Margin className={classes.leftMargin}>

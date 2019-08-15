@@ -17,6 +17,7 @@ import UploadOAS from './components/onboarding/upload-oas';
 import {ImportedOASContext, ImportedOASStore} from './contexts/ImportedOASContext';
 import OverView from './components/onboarding/Overview';
 import {EditorStore} from './contexts/EditorContext';
+import DiffPage from './components/diff/DIffPage'
 import {TutorialStore} from './contexts/TutorialContext';
 
 export const routerPaths = {
@@ -24,6 +25,7 @@ export const routerPaths = {
 	example: () => '/examples/:exampleId',
 	apiRoot: (base) => base,
 	pathPage: (base) => `${base}/paths/:pathId`,
+	diffPage: (base) => `${base}/diff`,
 	conceptPage: (base) => `${base}/concepts/:conceptId`,
 	localRoot: () => '/saved',
 };
@@ -188,6 +190,7 @@ class APIEditorRoutes extends React.Component {
 						<Switch>
 							<Route exact path={routerPaths.newRoot(url)} component={OverView}/>
 							<Route path={routerPaths.pathPage(url)} component={PathRoot}/>
+							<Route path={routerPaths.diffPage(url)} component={DiffPage}/>
 							<Route path={routerPaths.conceptPage(url)}
 								   component={(props) =>
 									   <ConceptsPage {...props} conceptId={props.match.params.conceptId}/>

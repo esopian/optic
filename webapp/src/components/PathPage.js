@@ -166,38 +166,7 @@ export function getNormalizedBodyDescriptor(value) {
     return {};
 }
 
-class PathPage extends React.Component {
-    constructor(props) {
-        super(props)
-        this.scrollContainer = React.createRef()
-    }
-
-
-    componentDidMount() {
-        this.ensureRequestFocused();
-    }
-
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        if (prevProps.pathId !== this.props.pathId) {
-            track('Loaded Path')
-            this.scrollContainer.current.scrollTo(0, 0)
-        }
-        this.ensureRequestFocused();
-    }
-
-    ensureRequestFocused() {
-        const {focusedRequestId, cachedQueryResults, pathId} = this.props;
-        const {requestIdsByPathId} = cachedQueryResults;
-        const requestIdsForPath = requestIdsByPathId[pathId] || [];
-        const focusedRequestExistsInThisPath = requestIdsForPath.indexOf(focusedRequestId) >= 0;
-        if (focusedRequestExistsInThisPath) {
-            return;
-        }
-        const targetId = requestIdsForPath[0] || null;
-
-        this.props.setFocusedRequestId(targetId);
-
-    }
+class PathEditor extends React.Component {
 
     renderPlaceholder() {
         return (
@@ -215,25 +184,16 @@ class PathPage extends React.Component {
     renderNotFound() {
         const {classes} = this.props
         return (
-
-            <Editor>
-                <FullSheet>
-                    <div className={classes.root}>
-                        <Typography>This Path does not exist</Typography>
-                    </div>
-                </FullSheet>
-            </Editor>
+            <FullSheet>
+                <div className={classes.root}>
+                    <Typography>This Path does not exist</Typography>
+                </div>
+            </FullSheet>
         )
     }
 
-
-    setRequestFocus = (requestId) => () => {
-        this.props.setFocusedRequestId(requestId);
-    };
-
     render() {
         const {classes, handleCommands, pathId, focusedRequestId, cachedQueryResults, mode, apiName, switchEditorMode} = this.props;
-
         const {requests, responses, requestParameters, pathsById, requestIdsByPathId} = cachedQueryResults;
 
         const path = pathsById[pathId];
@@ -400,15 +360,6 @@ class PathPage extends React.Component {
                 );
             });
 
-        const MethodsTOC = (<>
-            <Typography variant="h5" color="primary">Methods</Typography>
-            <Divider/>
-            <div style={{maxWidth: 200, marginTop: 5, display: 'flex', flexDirection: 'column'}}>
-                {methodLinks}
-            </div>
-        </>);
-
-
         const {contributions} = cachedQueryResults
         const resourceName = contributions.getOrUndefined(pathId, 'name')
 
@@ -423,7 +374,7 @@ class PathPage extends React.Component {
         const pageName = `${resourceName || absolutePath} ${apiName}`
 
         return (
-            <Editor baseUrl={this.props.baseUrl} leftMargin={MethodsTOC} scrollContainerRef={this.scrollContainer}>
+            <>
                 <Helmet><title>{pageName}</title></Helmet>
                 <div className={classes.root}>
                     <Sheet style={{paddingTop: 2}}>
@@ -451,9 +402,125 @@ class PathPage extends React.Component {
                     </Sheet>
                     {requestItems}
                 </div>
-            </Editor>
+            </>
         );
     }
 }
 
+class PathPage extends React.Component {
+
+    constructor(props) {
+        super(props)
+        this.scrollContainer = React.createRef()
+    }
+
+
+    componentDidMount() {
+        this.ensureRequestFocused();
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (prevProps.pathId !== this.props.pathId) {
+            track('Loaded Path')
+            this.scrollContainer.current.scrollTo(0, 0)
+        }
+        this.ensureRequestFocused();
+    }
+
+    ensureRequestFocused() {
+        const {focusedRequestId, cachedQueryResults, pathId} = this.props;
+        const {requestIdsByPathId} = cachedQueryResults;
+        const requestIdsForPath = requestIdsByPathId[pathId] || [];
+        const focusedRequestExistsInThisPath = requestIdsForPath.indexOf(focusedRequestId) >= 0;
+        if (focusedRequestExistsInThisPath) {
+            return;
+        }
+        const targetId = requestIdsForPath[0] || null;
+
+        this.props.setFocusedRequestId(targetId);
+
+    }
+
+    renderNotFound() {
+        const {classes} = this.props
+        return (
+
+            <Editor>
+                <FullSheet>
+                    <div className={classes.root}>
+                        <Typography>This Path does not exist</Typography>
+                    </div>
+                </FullSheet>
+            </Editor>
+        )
+    }
+
+
+    setRequestFocus = (requestId) => () => {
+        this.props.setFocusedRequestId(requestId);
+    };
+
+    render() {
+        const {classes, handleCommands, pathId, focusedRequestId, cachedQueryResults, mode, apiName, switchEditorMode} = this.props;
+
+        const {requests, responses, requestParameters, pathsById, requestIdsByPathId} = cachedQueryResults;
+
+        const path = pathsById[pathId];
+
+        if (!path) {
+            return this.renderNotFound();
+        }
+
+        const methodChoices = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
+        const lowestRank = methodChoices.length;
+        const ordering = methodChoices.reduce((acc, item, index) => {
+            acc[item] = index + 1
+            return acc
+        }, {})
+
+        const requestIdsForPath = requestIdsByPathId[pathId] || [];
+        const requestsForPath = requestIdsForPath.map((requestId) => requests[requestId]);
+        const methodLinks = requestsForPath
+            .sort((requestA, requestB) => {
+                const {httpMethod: methodA} = requestA.requestDescriptor
+                const {httpMethod: methodB} = requestB.requestDescriptor
+                return (ordering[methodA] || lowestRank) - (ordering[methodB] || lowestRank)
+            })
+            .map((request) => {
+                const {requestId, requestDescriptor} = request;
+                const {httpMethod} = requestDescriptor;
+                return (
+                    <Link key={requestId} href={`#${requestId}`} style={{textDecoration: 'none'}}>
+                        <Button
+                            size="small"
+                            disableRipple={true}
+                            className={classes.margin}
+                            style={{fontWeight: 200}}
+                            onClick={this.setRequestFocus(requestId)}
+                        >
+                            {httpMethod}
+                        </Button>
+                    </Link>
+                );
+            })
+
+        const MethodsTOC = (<>
+            <Typography variant="h5" color="primary">Methods</Typography>
+            <Divider/>
+            <div style={{maxWidth: 200, marginTop: 5, display: 'flex', flexDirection: 'column'}}>
+                {methodLinks}
+            </div>
+        </>);
+
+        return (
+            <Editor baseUrl={this.props.baseUrl} leftMargin={MethodsTOC} scrollContainerRef={this.scrollContainer}>
+                <PathEditor {...this.props} />
+            </Editor>
+        )
+
+    }
+}
+
+
 export default withFocusedRequestContext(withEditorContext(withRfcContext(withStyles(styles)(PathPage))));
+export const PathEditorWithContext = withFocusedRequestContext(withEditorContext(withRfcContext(withStyles(styles)(PathEditor))));
