@@ -192,6 +192,10 @@ class PathEditor extends React.Component {
         )
     }
 
+    setRequestFocus = (requestId) => () => {
+        this.props.setFocusedRequestId(requestId);
+    };
+
     render() {
         const {classes, handleCommands, pathId, focusedRequestId, cachedQueryResults, mode, apiName, switchEditorMode} = this.props;
         const {requests, responses, requestParameters, pathsById, requestIdsByPathId} = cachedQueryResults;

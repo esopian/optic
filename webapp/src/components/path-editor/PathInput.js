@@ -87,11 +87,12 @@ class PathInput extends React.Component {
             this.props.onSubmit()
             return
         }
-        console.log('backspace')
         const {currentComponent, pathComponents} = this.state;
         if (currentComponent.name === '') {
             this.setState({
                 pathComponents: pathComponents.slice(0, -1)
+            }, (newState) => {
+                this.emitChange(this.state)
             })
         }
     }
