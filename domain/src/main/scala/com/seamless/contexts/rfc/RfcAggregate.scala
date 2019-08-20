@@ -11,23 +11,25 @@ import com.seamless.contexts.requests.{RequestsAggregate, RequestsCommandContext
 import com.seamless.contexts.shapes.Commands.ShapesCommand
 import com.seamless.contexts.shapes.Events.ShapesEvent
 import com.seamless.contexts.shapes.{ShapesAggregate, ShapesCommandContext}
-
+import com.seamless.utils.PerformanceMeasurement._
 case class RfcCommandContext() extends BaseCommandContext
 
 object RfcAggregate extends EventSourcedAggregate[RfcState, RfcCommand, RfcCommandContext, RfcEvent] {
 
   override def handleCommand(state: RfcState): PartialFunction[(RfcCommandContext, RfcCommand), Effects[RfcEvent]] = {
-    case (_: RfcCommandContext, command: ShapesCommand) =>
-      forwardTo(ShapesAggregate)((ShapesCommandContext(), command), state.shapesState).asInstanceOf[Effects[RfcEvent]]
-    case (_: RfcCommandContext, command: RequestsCommand) =>
-      forwardTo(RequestsAggregate)((RequestsCommandContext(state.shapesState), command), state.requestsState).asInstanceOf[Effects[RfcEvent]]
+    time("Handling command") {
+      case (_: RfcCommandContext, command: ShapesCommand) =>
+        forwardTo(ShapesAggregate)((ShapesCommandContext(), command), state.shapesState).asInstanceOf[Effects[RfcEvent]]
+      case (_: RfcCommandContext, command: RequestsCommand) =>
+        forwardTo(RequestsAggregate)((RequestsCommandContext(state.shapesState), command), state.requestsState).asInstanceOf[Effects[RfcEvent]]
 
-    case (_: RfcCommandContext, contributionCommand: ContributionCommand) => contributionCommand match {
-      case AddContribution(id, key, value) => persist(ContributionAdded(id, key, value))
-      case SetAPIName(name) => persist(APINamed(name))
+      case (_: RfcCommandContext, contributionCommand: ContributionCommand) => contributionCommand match {
+        case AddContribution(id, key, value) => persist(ContributionAdded(id, key, value))
+        case SetAPIName(name) => persist(APINamed(name))
+        case _ => noEffect()
+      }
       case _ => noEffect()
     }
-    case _ => noEffect()
   }
 
   override def applyEvent(event: RfcEvent, state: RfcState): RfcState = {

@@ -2,6 +2,7 @@ package com.seamless.ddd
 
 import com.seamless.contexts.rfc.Events.RfcEvent
 import com.seamless.serialization.EventSerialization
+import com.seamless.utils.PerformanceMeasurement.time
 
 import scala.scalajs.js.annotation.JSExport
 
@@ -57,7 +58,9 @@ class InMemoryEventStore[Event] extends EventStore[Event] {
 
   override def append(id: AggregateId, newEvents: Vector[Event]): Unit = {
     val events = _store.getOrElseUpdate(id, scala.collection.mutable.ListBuffer[Event]())
-    events.appendAll(newEvents)
+    time("Appending event") {
+      events.appendAll(newEvents)
+    }
   }
 
   @JSExport
