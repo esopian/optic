@@ -11,7 +11,7 @@ import com.seamless.contexts.requests.projections.PathsWithRequestsProjection
 import com.seamless.contexts.rfc.Events.RfcEvent
 import com.seamless.contexts.rfc.projections.{APINameProjection, ComplexityScoreProjection, ContributionWrapper, ContributionsProjection}
 import com.seamless.ddd.{AggregateId, CachedProjection, EventStore}
-
+import com.seamless.utils.PerformanceMeasurement._
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExportAll, JSExportTopLevel}
 
@@ -88,7 +88,9 @@ class InMemoryQueries(eventStore: EventStore[RfcEvent], service: RfcService, agg
   }
 
   def complexityScore: String = {
-    ComplexityScoreProjection.calculate(pathsWithRequests, namedShapes)
+    time("Complexity score") {
+      ComplexityScoreProjection.calculate(pathsWithRequests, namedShapes)
+    }
   }
 
   private val apiNameCache = new CachedProjection(APINameProjection, events)
