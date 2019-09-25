@@ -14,6 +14,10 @@ trait JsonFileFixture {
     val filePath = "src/test/resources/diff-scenarios/" + slug + ".json"
     parseFile(new File(filePath)).right.get
   }
+  def eventsFrom(slug: String): Json = {
+    val filePath = "src/test/resources/changelog-scenarios/" + slug + ".json"
+    parseFile(new File(filePath)).right.get
+  }
   def commandsFrom(slug: String): Vector[Commands.RfcCommand] = {
     val filePath = "src/test/resources/diff-scenarios/" + slug + ".commands.json"
     val json = parseFile(new File(filePath)).right.get

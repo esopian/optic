@@ -18,70 +18,85 @@ object ShapeDiffer {
   case class NullObjectKey(parentObjectShapeId: ShapeId, fieldId: FieldId, key: String, expected: ShapeEntity) extends ShapeDiffResult
   case class UnexpectedObjectKey(parentObjectShapeId: ShapeId, key: String, expected: ShapeEntity, actual: Json) extends ShapeDiffResult
   case class KeyShapeMismatch(fieldId: FieldId, key: String, expected: ShapeEntity, actual: Json) extends ShapeDiffResult
+  case class KeyRenamed(fieldId: FieldId, key: String, newKey: String) extends ShapeDiffResult
   case class MapValueMismatch(key: String, expected: ShapeEntity, actual: Json) extends ShapeDiffResult
   case class MultipleInterpretations(expected: ShapeEntity, actual: Json) extends ShapeDiffResult
   type ParameterBindings = Map[ShapeParameterId, Option[ProviderDescriptor]]
 
-  //@TODO change bindings to UsageTrail
-  def diff(expectedShape: ShapeEntity, actualShapeOption: Option[Json])(implicit shapesState: ShapesState, bindings: ParameterBindings = Map.empty): ShapeDiffResult = {
-    // println(expectedShape, actualShape, bindings)
+  class ShapeDiffAccumulator {
+    private val _diffs = scala.collection.mutable.ListBuffer[ShapeDiffResult]()
+    def diffs = _diffs.toVector
+    def append(d: ShapeDiffResult*): ShapeDiffAccumulator = {
+      println(d)
+      _diffs.appendAll(d)
+      this
+    }
+    def head = diffs.headOption.getOrElse(NoDiff())
+    def noDiff = this
+  }
 
+  def diff(expectedShape: ShapeEntity, actualShape: ShapeDiffTargetProvider)(implicit shapesState: ShapesState, bindings: ParameterBindings = Map.empty): ShapeDiffResult = {
+    implicit val accumulator: ShapeDiffAccumulator = new ShapeDiffAccumulator
+    diffAll(expectedShape, actualShape)
+    accumulator.diffs.headOption.getOrElse(NoDiff())
+  }
+
+  //@TODO change bindings to UsageTrail
+  def diffAll(expectedShape: ShapeEntity, actualShape: ShapeDiffTargetProvider)(implicit shapesState: ShapesState, bindings: ParameterBindings = Map.empty, accumulator: ShapeDiffAccumulator = new ShapeDiffAccumulator): ShapeDiffAccumulator = {
     val coreShape = toCoreShape(expectedShape, shapesState)
-    if (actualShapeOption.isEmpty) {
+    if (actualShape.isEmpty) {
       val diff = coreShape match {
         case AnyKind => WeakNoDiff()
         case OptionalKind => NoDiff()
         case _ => UnsetValue(expectedShape)
       }
-      return diff
+      return accumulator append diff
     }
 
-    val actualShape = actualShapeOption.get
     coreShape match {
       case AnyKind => {
-        WeakNoDiff()
+        accumulator append WeakNoDiff()
       }
       case StringKind => {
         if (actualShape.isString) {
-          NoDiff()
+          accumulator noDiff
         } else {
-          shapeMismatchOrMissing(expectedShape, actualShape)
+          accumulator append shapeMismatchOrMissing(expectedShape, actualShape)
         }
       }
       case BooleanKind => {
         if (actualShape.isBoolean) {
-          NoDiff()
+          accumulator noDiff
         } else {
-          shapeMismatchOrMissing(expectedShape, actualShape)
+          accumulator append shapeMismatchOrMissing(expectedShape, actualShape)
         }
       }
       case NumberKind => {
         if (actualShape.isNumber) {
-          NoDiff()
+          accumulator noDiff
         } else {
-          shapeMismatchOrMissing(expectedShape, actualShape)
+          accumulator append shapeMismatchOrMissing(expectedShape, actualShape)
         }
       }
       case ListKind => {
         if (actualShape.isArray) {
           val itemShape = resolveParameterShape(expectedShape.shapeId, "$listItem")
           if (itemShape.isDefined) {
-            actualShape.asArray.get.foreach(item => {
-              val diff = ShapeDiffer.diff(itemShape.get, Some(item))
+            actualShape.items.foreach(item => {
+              val diff = ShapeDiffer.diffAll(itemShape.get, item)
               diff match {
                 case sd: NoDiff =>
-                case x => return x
+                case x => accumulator append(x.diffs:_*)
               }
             })
           }
-          NoDiff()
+          accumulator noDiff
         } else {
-          shapeMismatchOrMissing(expectedShape, actualShape)
+          accumulator append shapeMismatchOrMissing(expectedShape, actualShape)
         }
       }
       case ObjectKind => {
         if (actualShape.isObject) {
-          val o = actualShape.asObject.get
           val baseObject = resolveBaseObject(expectedShape.shapeId)
 
           val expectedFields = baseObject.descriptor.fieldOrdering
@@ -89,9 +104,9 @@ object ShapeDiffer {
               val field = shapesState.fields(fieldId)
               (field.descriptor.name, field)
             })
-          val actualFields = o.toIterable
+          val actualFields = actualShape.fields
           val expectedKeys = expectedFields.map(_._1).toSet
-          val actualKeys = actualFields.map(_._1).toSet
+          val actualKeys = actualFields.keySet
 
           val flattenedShape = shapesState.flattenedShape(expectedShape.shapeId)
 
@@ -118,16 +133,24 @@ object ShapeDiffer {
               }
             }
             if (expectedFieldShape.isDefined) {
-              val actualFieldValue = o(key)
+              val actualFieldValue = actualShape.getField(key, flattenedField.fieldId).get
+
+              //check for rename
+              val (pName, cName) = actualShape.fields.find(_._2.id == flattenedField.fieldId).map(i => {(key, i._1)}).getOrElse((key, key))
+              if (pName != cName) {
+                println(pName + " change to  " + cName)
+                accumulator append KeyRenamed(flattenedField.fieldId, pName, cName)
+              }
+
               implicit val bindings: ParameterBindings = flattenedField.bindings ++ flattenedShape.bindings
-              val diff = ShapeDiffer.diff(expectedFieldShape.get, actualFieldValue)
+              val diff = ShapeDiffer.diffAll(expectedFieldShape.get, actualFieldValue)(shapesState, bindings, accumulator = new ShapeDiffAccumulator).head
               diff match {
-                case d: ShapeMismatch => return KeyShapeMismatch(field.fieldId, key, expectedFieldShape.get, actualFieldValue.get)
-                case d: UnsetValue => return UnsetObjectKey(expectedShape.shapeId, field.fieldId, key, expectedFieldShape.get)
-                case d: NullValue => return NullObjectKey(expectedShape.shapeId, field.fieldId, key, expectedFieldShape.get)
+                case d: ShapeMismatch => accumulator append KeyShapeMismatch(field.fieldId, key, expectedFieldShape.get, actualFieldValue.asJson)
+                case d: UnsetValue => accumulator append UnsetObjectKey(expectedShape.shapeId, field.fieldId, key, expectedFieldShape.get)
+                case d: NullValue => accumulator append NullObjectKey(expectedShape.shapeId, field.fieldId, key, expectedFieldShape.get)
                 case x: NoDiff =>
                 case x => {
-                  return x
+                  accumulator append x
                 }
               }
             }
@@ -136,33 +159,34 @@ object ShapeDiffer {
           // detect keys that should not be present
           val extraKeys = actualKeys -- expectedKeys
           if (extraKeys.nonEmpty) {
-            val actualFieldValue = o(extraKeys.head).get
-            return UnexpectedObjectKey(baseObject.shapeId, extraKeys.head, baseObject, actualFieldValue)
+            extraKeys.map(extra => {
+              val actualFieldValue = actualShape.fields(extra)
+              accumulator append UnexpectedObjectKey(baseObject.shapeId, extra, baseObject, actualFieldValue.asJson)
+            })
           }
-
-          NoDiff()
+          accumulator
         } else {
-          shapeMismatchOrMissing(expectedShape, actualShape)
+          accumulator append shapeMismatchOrMissing(expectedShape, actualShape)
         }
       }
       case NullableKind => {
         val referencedShape = resolveParameterShape(expectedShape.shapeId, "$nullableInner")
         if (referencedShape.isDefined) {
           if (actualShape.isNull) {
-            NoDiff()
+            accumulator noDiff
           } else {
-            ShapeDiffer.diff(referencedShape.get, actualShapeOption)
+            accumulator append (ShapeDiffer.diffAll(referencedShape.get, actualShape).diffs:_*)
           }
         } else {
-          WeakNoDiff()
+          accumulator append WeakNoDiff()
         }
       }
       case OptionalKind => {
         val referencedShape = resolveParameterShape(expectedShape.shapeId, "$optionalInner")
         if (referencedShape.isDefined) {
-          ShapeDiffer.diff(referencedShape.get, actualShapeOption)
+          accumulator append (ShapeDiffer.diffAll(referencedShape.get, actualShape).diffs:_*)
         } else {
-          WeakNoDiff()
+          accumulator append WeakNoDiff()
         }
       }
       case OneOfKind => {
@@ -173,7 +197,7 @@ object ShapeDiffer {
         val firstMatch = shapeParameterIds.find(shapeParameterId => {
           val referencedShape = resolveParameterShape(expectedShape.shapeId, shapeParameterId)
           if (referencedShape.isDefined) {
-            val diff = ShapeDiffer.diff(referencedShape.get, actualShapeOption)
+            val diff = ShapeDiffer.diffAll(referencedShape.get, actualShape)
             diff == NoDiff()
           } else {
             false
@@ -181,34 +205,34 @@ object ShapeDiffer {
         })
         println(firstMatch)
         if (firstMatch.isDefined) {
-          NoDiff()
+          accumulator noDiff
         } else {
-          MultipleInterpretations(expectedShape, actualShape)
+          accumulator append MultipleInterpretations(expectedShape, actualShape.asJson)
         }
       }
       case MapKind => {
         if (actualShape.isObject) {
-          val o = actualShape.asObject.get
+          val o = actualShape.fields
           val referencedShape = resolveParameterShape(expectedShape.shapeId, "$mapValue")
           if (referencedShape.isDefined) {
             o.keys.foreach(key => {
               val v = o(key)
-              val diff = ShapeDiffer.diff(referencedShape.get, v)
+              val diff = ShapeDiffer.diffAll(referencedShape.get, v).head
               diff match {
-                case d: ShapeMismatch => return MapValueMismatch(key, referencedShape.get, v.get)
-                case d: UnsetValue => return MapValueMismatch(key, referencedShape.get, v.get)
+                case d: ShapeMismatch => return accumulator append MapValueMismatch(key, referencedShape.get, v.asJson)
+                case d: UnsetValue => return accumulator append MapValueMismatch(key, referencedShape.get, v.asJson)
                 case x: NoDiff =>
                 case x => {
-                  return x
+                  return return accumulator append x
                 }
               }
             })
-            NoDiff()
+            accumulator noDiff
           } else {
-            WeakNoDiff()
+            accumulator append WeakNoDiff()
           }
         } else {
-          shapeMismatchOrMissing(expectedShape, actualShape)
+          accumulator append shapeMismatchOrMissing(expectedShape, actualShape)
         }
       }
       case ReferenceKind => {
@@ -216,14 +240,14 @@ object ShapeDiffer {
         if (referencedShape.isDefined) {
           //@TODO: referencedShape should be an object. find the first field which is an Identifier<T>. Diff the actualShape against the resolved T
         }
-        WeakNoDiff()
+        accumulator append WeakNoDiff()
       }
       case IdentifierKind => {
         val identifierShape = resolveParameterShape(expectedShape.shapeId, "$identifierInner")
         if (identifierShape.isDefined) {
           //@TODO: identifierShape should be a string or number. Diff the actualShape against it.
         }
-        WeakNoDiff()
+        accumulator append WeakNoDiff()
       }
     }
   }
@@ -253,11 +277,11 @@ object ShapeDiffer {
     }
   }
 
-  def shapeMismatchOrMissing(expectedShape: ShapeEntity, actualShape: Json): ShapeDiffResult = {
+  def shapeMismatchOrMissing(expectedShape: ShapeEntity, actualShape: ShapeDiffTargetProvider): ShapeDiffResult = {
     if (actualShape.isNull) {
       NullValue(expectedShape)
     } else {
-      ShapeMismatch(expectedShape, actualShape)
+      ShapeMismatch(expectedShape, actualShape.asJson)
     }
   }
 }

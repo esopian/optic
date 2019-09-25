@@ -90,7 +90,7 @@ object RequestDiffer {
         case d: ShapedBodyDescriptor => {
           if (d.httpContentType == interaction.apiRequest.contentType) {
             val shape = spec.shapesState.shapes(d.shapeId)
-            val shapeDiff = ShapeDiffer.diff(shape, interaction.apiRequest.body)(spec.shapesState)
+            val shapeDiff = ShapeDiffer.diff(shape, ShapeDiffTargetProvider.fromActualJson(interaction.apiRequest.body))(spec.shapesState)
             if (shapeDiff == ShapeDiffer.NoDiff()) {
               None
             } else {
@@ -132,7 +132,7 @@ object RequestDiffer {
         //@TODO: check content type
         if (d.httpContentType == interaction.apiResponse.contentType) {
           val shape = spec.shapesState.shapes(d.shapeId)
-          val shapeDiff = ShapeDiffer.diff(shape, interaction.apiResponse.body)(spec.shapesState)
+          val shapeDiff = ShapeDiffer.diff(shape, ShapeDiffTargetProvider.fromActualJson(interaction.apiResponse.body))(spec.shapesState)
           if (shapeDiff == ShapeDiffer.NoDiff()) {
             None
           } else {

@@ -3,7 +3,7 @@ package com.seamless.diff.initial
 import com.seamless.contexts.shapes.Commands.ShapeId
 import com.seamless.contexts.shapes.ShapesHelper.{BooleanKind, NullableKind, NumberKind, StringKind}
 import com.seamless.contexts.shapes.ShapesState
-import com.seamless.diff.ShapeDiffer
+import com.seamless.diff.{ShapeDiffTargetProvider, ShapeDiffer}
 import com.seamless.diff.ShapeDiffer.NoDiff
 import io.circe.Json
 
@@ -36,7 +36,7 @@ object ShapeResolver {
     val conceptsWithIds = shapesState.concepts
 
     conceptsWithIds.collectFirst {
-      case (shapeId, entity) if ShapeDiffer.diff(entity, Some(x)) == NoDiff() => shapeId
+      case (shapeId, entity) if ShapeDiffer.diff(entity, ShapeDiffTargetProvider.fromActualJson(Some(x))) == NoDiff() => shapeId
     }
   }
 }

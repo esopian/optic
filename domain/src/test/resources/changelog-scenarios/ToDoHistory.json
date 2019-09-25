@@ -1,0 +1,51 @@
+[
+  {"PathComponentAdded":{"name":"todo","parentPathId":"root","pathId":"path_5FQEcCS2IL"}}
+,{"PathParameterAdded":{"name":"todoId","parentPathId":"path_5FQEcCS2IL","pathId":"path_oWKAGMAzvt"}}
+,{"ShapeAdded":{"baseShapeId":"$string","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"shape_vmCPEXyR4Q"}}
+,{"PathParameterShapeSet":{"pathId":"path_oWKAGMAzvt","shapeDescriptor":{"isRemoved":false,"shapeId":"shape_vmCPEXyR4Q"}}}
+,{"RequestAdded":{"httpMethod":"PATCH","pathId":"path_oWKAGMAzvt","requestId":"request_5FjTzyWhH5"}}
+,{"ShapeAdded":{"baseShapeId":"$object","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"dgYGl3_0"}}
+,{"ShapeAdded":{"baseShapeId":"$boolean","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"dgYGl3_2"}}
+,{"FieldAdded":{"fieldId":"dgYGl3_1","name":"isDone","shapeDescriptor":{"FieldShapeFromShape":{"fieldId":"dgYGl3_1","shapeId":"dgYGl3_2"}},"shapeId":"dgYGl3_0"}}
+,{"ShapeAdded":{"baseShapeId":"$string","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"dgYGl3_4"}}
+,{"FieldAdded":{"fieldId":"dgYGl3_3","name":"task","shapeDescriptor":{"FieldShapeFromShape":{"fieldId":"dgYGl3_3","shapeId":"dgYGl3_4"}},"shapeId":"dgYGl3_0"}}
+,{"ShapeAdded":{"baseShapeId":"dgYGl3_0","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"shape_WxxnGjKERa"}}
+,{"RequestBodySet":{"bodyDescriptor":{"httpContentType":"application/json","isRemoved":false,"shapeId":"shape_WxxnGjKERa"},"requestId":"request_5FjTzyWhH5"}}
+,{"ShapeRenamed":{"name":"ToDoWrite","shapeId":"dgYGl3_0"}}
+,{"ResponseAdded":{"httpStatusCode":200,"requestId":"request_5FjTzyWhH5","responseId":"response_AucYwhvE5W"}}
+,{"ShapeAdded":{"baseShapeId":"$object","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"GGcCHk_0"}}
+,{"ShapeAdded":{"baseShapeId":"$string","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"GGcCHk_2"}}
+,{"FieldAdded":{"fieldId":"GGcCHk_1","name":"id","shapeDescriptor":{"FieldShapeFromShape":{"fieldId":"GGcCHk_1","shapeId":"GGcCHk_2"}},"shapeId":"GGcCHk_0"}}
+,{"ShapeAdded":{"baseShapeId":"$boolean","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"GGcCHk_4"}}
+,{"FieldAdded":{"fieldId":"GGcCHk_3","name":"isDone","shapeDescriptor":{"FieldShapeFromShape":{"fieldId":"GGcCHk_3","shapeId":"GGcCHk_4"}},"shapeId":"GGcCHk_0"}}
+,{"ShapeAdded":{"baseShapeId":"$string","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"GGcCHk_6"}}
+,{"FieldAdded":{"fieldId":"GGcCHk_5","name":"task","shapeDescriptor":{"FieldShapeFromShape":{"fieldId":"GGcCHk_5","shapeId":"GGcCHk_6"}},"shapeId":"GGcCHk_0"}}
+,{"ShapeAdded":{"baseShapeId":"GGcCHk_0","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"shape_8INPxqwQ00"}}
+,{"ResponseBodySet":{"bodyDescriptor":{"httpContentType":"application/json; charset=utf-8","isRemoved":false,"shapeId":"shape_8INPxqwQ00"},"responseId":"response_AucYwhvE5W"}}
+,{"ShapeRenamed":{"name":"ToDoRead","shapeId":"GGcCHk_0"}}
+,{"PathComponentAdded":{"name":"todos","parentPathId":"root","pathId":"path_z7DIb1g7hL"}}
+,{"RequestAdded":{"httpMethod":"GET","pathId":"path_z7DIb1g7hL","requestId":"request_R6MSTC8kFn"}}
+,{"ResponseAdded":{"httpStatusCode":200,"requestId":"request_R6MSTC8kFn","responseId":"response_K9UgbmdZ9b"}}
+,{"ShapeAdded":{"baseShapeId":"$list","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"hTwzZ6_0"}}
+,{"ShapeParameterShapeSet":{"shapeDescriptor":{"ProviderInShape":{"consumingParameterId":"$listItem","providerDescriptor":{"ShapeProvider":{"shapeId":"GGcCHk_0"}},"shapeId":"hTwzZ6_0"}}}}
+,{"ShapeAdded":{"baseShapeId":"hTwzZ6_0","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"shape_Sek6zSMmxU"}}
+,{"ResponseBodySet":{"bodyDescriptor":{"httpContentType":"application/json; charset=utf-8","isRemoved":false,"shapeId":"shape_Sek6zSMmxU"},"responseId":"response_K9UgbmdZ9b"}}
+,{"RequestAdded":{"httpMethod":"POST","pathId":"path_z7DIb1g7hL","requestId":"request_293Su6bI1V"}}
+,{"ShapeAdded":{"baseShapeId":"dgYGl3_0","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"shape_4giYULsKR8"}}
+,{"RequestBodySet":{"bodyDescriptor":{"httpContentType":"application/json","isRemoved":false,"shapeId":"shape_4giYULsKR8"},"requestId":"request_293Su6bI1V"}}
+,{"ResponseAdded":{"httpStatusCode":200,"requestId":"request_293Su6bI1V","responseId":"response_QcLJP36naL"}}
+,{"ShapeAdded":{"baseShapeId":"GGcCHk_0","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"shape_VeFa6vSBUc"}}
+,{"ResponseBodySet":{"bodyDescriptor":{"httpContentType":"application/json; charset=utf-8","isRemoved":false,"shapeId":"shape_VeFa6vSBUc"},"responseId":"response_QcLJP36naL"}}
+,{"PathComponentAdded":{"name":"download","parentPathId":"path_z7DIb1g7hL","pathId":"path_Tfc44B1Wtp"}}
+,{"RequestAdded":{"httpMethod":"GET","pathId":"path_Tfc44B1Wtp","requestId":"request_nkXImtQgiS"}}
+,{"ResponseAdded":{"httpStatusCode":200,"requestId":"request_nkXImtQgiS","responseId":"response_iqbNCfMo4G"}}
+,{"ShapeAdded":{"baseShapeId":"$object","name":"","parameters":{"DynamicParameterList":{"shapeParameterIds":[]}},"shapeId":"shape_MZmcc5bByY"}}
+,{"ResponseBodySet":{"bodyDescriptor":{"httpContentType":"application/json","isRemoved":false,"shapeId":"shape_MZmcc5bByY"},"responseId":"response_iqbNCfMo4G"}}
+,{"BaseShapeSet":{"baseShapeId":"$list","shapeId":"shape_MZmcc5bByY"}}
+,{"ShapeParameterShapeSet":{"shapeDescriptor":{"ProviderInShape":{"consumingParameterId":"$listItem","providerDescriptor":{"ShapeProvider":{"shapeId":"GGcCHk_0"}},"shapeId":"shape_MZmcc5bByY"}}}}
+,{"FieldAdded":{"fieldId":"field_VV65W1GVvl","name":"","shapeDescriptor":{"FieldShapeFromShape":{"fieldId":"field_VV65W1GVvl","shapeId":"$string"}},"shapeId":"GGcCHk_0"}}
+,{"FieldRenamed":{"fieldId":"field_VV65W1GVvl","name":"dueDate"}}
+,{"FieldAdded":{"fieldId":"field_VV65WA","name":"","shapeDescriptor":{"FieldShapeFromShape":{"fieldId":"field_VV65WA","shapeId":"$string"}},"shapeId":"GGcCHk_0"}}
+,{"FieldRenamed":{"fieldId":"field_VV65WA","name":"_next_time_"}}
+,{"FieldRenamed":{"fieldId":"GGcCHk_3","name":"isDone_NEW"}}
+]
