@@ -3,7 +3,17 @@ import * as findUp from 'find-up'
 import * as fs from 'fs-extra'
 
 export interface IPathMapping {
-
+  cwd: string
+  basePath: string
+  specStorePath: string
+  configPath: string
+  readmePath: string
+  gitignorePath: string
+  sessionsPath: string
+  exampleRequestsPath: string
+  outputPath: string
+  integrationContracts: string
+  integrationExampleRequestsPath: string
 }
 export async function getPaths(fallbackPath: (cwd: string) => string = (cwd) => path.join(cwd, '.api')) {
   const rootPath = await (async () => {

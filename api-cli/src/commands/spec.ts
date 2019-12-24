@@ -112,7 +112,6 @@ export async function emitGitState() {
   try {
     const gitInfo = new VersionControl()
     const gitState = await gitInfo.getCurrentGitState()
-    // @ts-ignore
     const {specStorePath} = await getPaths()
     const specStoreExists = await fs.pathExists(specStorePath)
     const eventsAsString = specStoreExists ? (await fs.readFile(specStorePath)).toString() : '[]'

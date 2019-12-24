@@ -186,7 +186,6 @@ export function toInteraction(sample: IApiInteraction) {
 }
 
 export async function checkDiffOrUnrecognizedPath(result: ICaptureSessionResult) {
-  // @ts-ignore
   const {specStorePath} = await getPaths()
   const specStoreExists = await fs.pathExists(specStorePath)
   if (!specStoreExists) {
