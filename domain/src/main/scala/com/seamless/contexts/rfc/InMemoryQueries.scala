@@ -75,6 +75,10 @@ class QueriesFacade(eventStore: EventStore[RfcEvent], service: RfcService, aggre
   def flatShapeForExample(example: js.Any): js.Any = {
     convertJsonToJs(q.flatShapeForExample(convertJsToJson(example).right.get).asJson)
   }
+
+  def queries() = {
+    q
+  }
 }
 
 class InMemoryQueries(eventStore: EventStore[RfcEvent], service: RfcService, aggregateId: AggregateId) {

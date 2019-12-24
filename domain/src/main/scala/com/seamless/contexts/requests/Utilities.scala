@@ -79,6 +79,14 @@ object Utilities {
       })
   }
 
+  def parents(pathComponentId: PathComponentId, pathComponents: PathMap): Seq[PathComponentDescriptor] = {
+    if (pathComponentId == rootPathId) {
+      return Seq.empty
+    }
+    val path = pathComponents(pathComponentId)
+    Seq(path.descriptor) ++ parents(path.descriptor.parentPathId, pathComponents)
+  }
+
   def toAbsolutePath(pathId: PathComponentId)(implicit pathComponents: Map[PathComponentId, PathComponent]): String = {
     if (pathId == rootPathId) {
       "/"
