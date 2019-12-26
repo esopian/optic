@@ -1,8 +1,11 @@
 package com.seamless.serialization
 
 
+import com.seamless.contexts.requests.Commands.RequestId
 import com.seamless.contexts.requests.{Commands, Utilities}
 import com.seamless.contexts.rfc.InMemoryQueries
+import com.seamless.contexts.shapes.ShapesHelper.OptionalKind
+import com.seamless.contexts.shapes.projections.{FlatShapeProjection, JsonSchemaHelpers, JsonSchemaProjection}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportAll}
@@ -20,7 +23,9 @@ object CogentSerialization {
   type ApiStatusCode = Int
 
   case class IApiRequestParameter (
-    name: String
+    name: String,
+    required: Boolean,
+    asJsonSchema: Json
   )
   case class IApiRequestBody (
     contentType: ApiContentType,
@@ -38,6 +43,8 @@ object CogentSerialization {
     pathParameters: Seq[IApiRequestParameter],
     queryParameters: Seq[IApiRequestParameter],
     bodies: Seq[IApiRequestBody],
+    requestId: RequestId,
+    purpose: String
   )
   case class IApiResponse (
     statusCode: ApiStatusCode,
@@ -81,15 +88,35 @@ object CogentSerialization {
             requestParameterEntity.requestParameterDescriptor.requestId == requestEntity.requestId
           }).values
 
-        //@TODO: there will only ever be at most 1 query parameter. If it is present, it is an object. each key represents an actual query parameter and its parsed type. should only be either a string or an array of strings
-        val queryParameters = requestParameters
-          .filter(x => x.requestParameterDescriptor.location == "query")
-          .map(x => IApiRequestParameter(x.requestParameterDescriptor.name))
-          .toSeq
+        val queryParamShape: Option[FlatShapeProjection.FlatShapeResult] = queries.requestsState.requestParameters.filter(x => {
+          val (parameterId, parameter) = x
+          parameter.requestParameterDescriptor.requestId == requestEntity.requestId && parameter.requestParameterDescriptor.location == "query"
+        }).values.headOption.flatMap(query => {
+          query.requestParameterDescriptor.shapeDescriptor match {
+            case c: Commands.UnsetRequestParameterShapeDescriptor => {
+              None
+            }
+            case c: Commands.ShapedRequestParameterShapeDescriptor => {
+              Some(FlatShapeProjection.forShapeId(c.shapeId)(queries.shapesState))
+            }
+          }
+        })
+
+        val queryParamFields = queryParamShape.map(_.root.fields).getOrElse(Seq.empty)
+        val queryParameters = queryParamFields.map(i => {
+          val innerOption = i.shape.links.get(OptionalKind.innerParam)
+          if (innerOption.isDefined) {
+            //is optional
+            IApiRequestParameter(i.fieldName, false, new JsonSchemaProjection(innerOption.get)(queries.shapesState).asJsonSchema(true))
+          } else {
+            //is required
+            IApiRequestParameter(i.fieldName, true, new JsonSchemaProjection(i.shape.id)(queries.shapesState).asJsonSchema(true))
+          }
+        })
 
         val headerParameters = requestParameters
           .filter(x => x.requestParameterDescriptor.location == "header")
-          .map(x => IApiRequestParameter(x.requestParameterDescriptor.name))
+          .map(x => IApiRequestParameter(x.requestParameterDescriptor.name, false, JsonSchemaHelpers.defaultStringType))
           .toSeq
 
         val pathParents = Utilities.parents(requestEntity.requestDescriptor.pathComponentId, requestsState.pathComponents)
@@ -100,12 +127,14 @@ object CogentSerialization {
               case d: Commands.BasicPathComponentDescriptor => false
             }
           })
-          .map(x => IApiRequestParameter(x.name))
+          .map(x => IApiRequestParameter(x.name, true, JsonSchemaHelpers.defaultStringType))
         val request = IApiRequest(
           headerParameters,
           pathParameters,
           queryParameters,
-          bodies
+          bodies,
+          requestEntity.requestId,
+          queries.contributions.get(requestEntity.requestId, "purpose").getOrElse("")
         )
 
         val responses = requestsState

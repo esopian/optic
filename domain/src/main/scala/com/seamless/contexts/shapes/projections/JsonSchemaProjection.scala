@@ -89,6 +89,12 @@ object JsonSchemaHelpers {
     }
   }
 
+  def defaultStringType = {
+    val schema = new JsonSchema
+    schema.assignType("string".asJson)
+    schema.asJson
+  }
+
   class JsonSchema {
 
     private var _internal = Json.obj().asObject.get
